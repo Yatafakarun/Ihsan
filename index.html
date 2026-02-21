@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ihsan</title>
+    <link rel="stylesheet" href="assets/styles/theme.css" />
+    <link rel="stylesheet" href="assets/styles/app.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand" id="appName">Ihsan</div>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" class="lang-btn" data-lang="en">English</button>
+          <button type="button" class="lang-btn" data-lang="ar">العربية</button>
+        </div>
+      </header>
+
+      <section class="status" id="setupPanel" hidden>
+        <h2 id="setupTitle">Setup needed</h2>
+        <p id="setupBody">
+          Set the published CSV URLs in <code>assets/js/app.js</code> for English and Arabic.
+        </p>
+      </section>
+
+      <section class="status error" id="errorPanel" hidden>
+        <h2 id="errorTitle">Could not load reminders</h2>
+        <p id="errorBody">Please check the CSV links and try again.</p>
+        <button type="button" class="btn" id="retryBtn">Retry</button>
+      </section>
+
+      <section class="filter-row">
+        <label for="categorySelect" id="categoryLabel">Category</label>
+        <select id="categorySelect"></select>
+      </section>
+
+      <section class="card" aria-live="polite">
+        <div class="card-content">
+          <p id="reminderText">Loading...</p>
+          <div class="card-details" id="cardDetails" hidden>
+            <div class="card-meta" id="sourceBlock">
+              <span class="card-label" id="sourceLabel">Sources</span>
+              <div class="source-list" id="sourceList"></div>
+            </div>
+            <div class="card-meta" id="descBlock">
+              <span class="card-label" id="descLabel">Description</span>
+              <p class="card-desc" id="descText"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button type="button" class="btn primary" id="newBtn">New</button>
+        <button type="button" class="btn" id="copyBtn">Copy</button>
+        <button type="button" class="btn" id="shareBtn">Share</button>
+      </section>
+
+      <section class="meta">
+        <span id="charCount">0</span>
+        <span id="lengthHint">OK</span>
+      </section>
+
+      <footer id="footerText">
+        Pick a reminder, tap Copy or Share, then paste into WhatsApp status.
+      </footer>
+
+      <section class="diagnostics" id="diagnostics" hidden>
+        <div class="diag-header">
+          <h2>Diagnostics</h2>
+          <button type="button" class="btn" id="selfTestBtn">Run self-test</button>
+        </div>
+        <ul class="diag-list" id="diagList"></ul>
+        <ul class="diag-results" id="diagResults"></ul>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script type="module" src="assets/js/app.js"></script>
+  </body>
+</html>
