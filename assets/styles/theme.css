@@ -1,6 +1,29 @@
+@font-face {
+  font-family: "Jannah";
+  src: url("../../Fonts/janna_LT_bold.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Uthmani Hafs";
+  src: url("../../Fonts/uthmanic_hafs_v20.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
-    "Apple Color Emoji", "Segoe UI Emoji";
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Helvetica,
+    Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display: "Iowan Old Style", "Palatino", "Palatino Linotype",
+    "Book Antiqua", "Georgia", serif;
+  --font-ar: "Jannah", "SF Arabic", "Avenir Next Arabic",
+    "Helvetica Neue Arabic", "DIN Next Arabic", "Noto Sans Arabic",
+    "Noto Naskh Arabic UI", "Tahoma", "Arial", "Geeza Pro", sans-serif;
+  --font-ayah: "Uthmani Hafs", "Jannah", "Noto Naskh Arabic UI",
+    "Geeza Pro", serif;
 
   --color-bg: #f6f4ee;
   --color-bg-accent: #e8efe9;
@@ -12,8 +35,14 @@
   --color-accent: #0f6d5f;
   --color-accent-contrast: #ffffff;
   --color-danger: #b0463c;
+  --color-card-grad-start: #ffffff;
+  --color-card-grad-end: #f3efe5;
+  --color-card-accent: rgba(15, 109, 95, 0.08);
+  --color-pill-bg: rgba(255, 255, 255, 0.7);
+  --color-pill-border: rgba(0, 0, 0, 0.08);
 
   --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 24px 50px rgba(15, 25, 19, 0.18);
 
   --radius-1: 8px;
   --radius-2: 14px;

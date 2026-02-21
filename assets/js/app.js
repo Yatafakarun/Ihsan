@@ -45,12 +45,6 @@ const strings = {
     shareSuccess: "Share opened.",
     shareFail: "Share canceled. Use Copy instead.",
     shareFallback: "Share link opened.",
-    sourceLabel: "Sources",
-    sourceAyah: "Ayah",
-    sourceHadith: "Hadith",
-    sourceQuote: "Quote",
-    sourceOther: "Other",
-    descLabel: "Description",
     charsLabel: "chars",
     hintShort: "Short",
     hintOk: "OK",
@@ -75,12 +69,6 @@ const strings = {
     shareSuccess: "تم فتح المشاركة.",
     shareFail: "تم إلغاء المشاركة. استخدم النسخ.",
     shareFallback: "تم فتح رابط المشاركة.",
-    sourceLabel: "المصادر",
-    sourceAyah: "آية",
-    sourceHadith: "حديث",
-    sourceQuote: "اقتباس",
-    sourceOther: "أخرى",
-    descLabel: "الوصف",
     charsLabel: "حرف",
     hintShort: "قصير",
     hintOk: "مناسب",
@@ -96,10 +84,8 @@ const els = {
   reminderText: document.getElementById("reminderText"),
   cardDetails: document.getElementById("cardDetails"),
   sourceBlock: document.getElementById("sourceBlock"),
-  sourceLabel: document.getElementById("sourceLabel"),
   sourceList: document.getElementById("sourceList"),
   descBlock: document.getElementById("descBlock"),
-  descLabel: document.getElementById("descLabel"),
   descText: document.getElementById("descText"),
   newBtn: document.getElementById("newBtn"),
   copyBtn: document.getElementById("copyBtn"),
@@ -159,6 +145,11 @@ function setControlsEnabled(enabled) {
   els.shareBtn.disabled = !enabled;
 }
 
+function setCopyShareEnabled(enabled) {
+  els.copyBtn.disabled = !enabled;
+  els.shareBtn.disabled = !enabled;
+}
+
 function setReminderText(text) {
   els.reminderText.textContent = text;
   updateMeta(text);
@@ -175,14 +166,9 @@ function updateCardDetails(item) {
 
   const sources = item.sources || {};
   const desc = item.desc || "";
-  const sourceGroups = [
-    { key: "ayah", labelKey: "sourceAyah" },
-    { key: "hadith", labelKey: "sourceHadith" },
-    { key: "quote", labelKey: "sourceQuote" },
-    { key: "other", labelKey: "sourceOther" },
-  ];
-  const hasSources = sourceGroups.some((group) =>
-    Array.isArray(sources[group.key]) && sources[group.key].length > 0
+  const sourceKeys = ["ayah", "hadith", "quote", "other"];
+  const hasSources = sourceKeys.some((key) =>
+    Array.isArray(sources[key]) && sources[key].length > 0
   );
   const hasDesc = Boolean(desc);
 
@@ -196,44 +182,47 @@ function updateCardDetails(item) {
     els.descBlock.hidden = !hasDesc;
   }
 
-  if (els.sourceLabel) {
-    els.sourceLabel.textContent = strings[state.lang].sourceLabel;
-  }
-
   if (els.sourceList) {
     els.sourceList.innerHTML = "";
     if (hasSources) {
-      const langStrings = strings[state.lang];
-      sourceGroups.forEach((group) => {
-        const values = Array.isArray(sources[group.key])
-          ? sources[group.key]
-          : [];
+      const isArabic = state.lang === "ar";
+      const isEnglish = state.lang === "en";
+      const prefixAyah = isArabic
+        ? "قال تعالئ"
+        : "Allah, the Most High, says:";
+      const prefixHadith = isArabic
+        ? "قال رسول الله صلى الله عليه وسلم"
+        : "The Messenger of Allah (peace be upon him) said";
+      const applyPrefix = (value, prefix) => {
+        const trimmed = String(value || "").trim();
+        if (!trimmed) return "";
+        if (!prefix) return trimmed;
+        if (trimmed.startsWith(prefix)) return trimmed;
+        const prefixWithColon = `${prefix}:`;
+        if (trimmed.startsWith(prefixWithColon)) return trimmed;
+        return `${prefix} ${trimmed}`;
+      };
+
+      sourceKeys.forEach((key) => {
+        const values = Array.isArray(sources[key]) ? sources[key] : [];
         if (!values.length) return;
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "source-item";
-
-        const label = document.createElement("span");
-        label.className = "card-label";
-        label.textContent = langStrings[group.labelKey];
-
-        const list = document.createElement("ul");
-        list.className = "ref-list";
         values.forEach((value) => {
+          let finalValue = value;
+          if (key === "ayah") {
+            finalValue = applyPrefix(value, prefixAyah);
+          } else if (key === "hadith") {
+            finalValue = applyPrefix(value, prefixHadith);
+          }
+          if (!finalValue) return;
           const li = document.createElement("li");
-          li.textContent = value;
-          list.appendChild(li);
+          if (key === "ayah") {
+            li.classList.add("ref-ayah");
+          }
+          li.textContent = finalValue;
+          els.sourceList.appendChild(li);
         });
-
-        wrapper.appendChild(label);
-        wrapper.appendChild(list);
-        els.sourceList.appendChild(wrapper);
       });
     }
-  }
-
-  if (els.descLabel) {
-    els.descLabel.textContent = strings[state.lang].descLabel;
   }
 
   if (els.descText) {
@@ -271,12 +260,6 @@ function updateLanguageUI() {
   els.errorTitle.textContent = langStrings.errorTitle;
   els.errorBody.textContent = langStrings.errorBody;
   els.retryBtn.textContent = langStrings.retry;
-  if (els.sourceLabel) {
-    els.sourceLabel.textContent = langStrings.sourceLabel;
-  }
-  if (els.descLabel) {
-    els.descLabel.textContent = langStrings.descLabel;
-  }
 
   els.langButtons.forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.lang === state.lang);
@@ -335,6 +318,7 @@ function pickRandomReminder() {
     setReminderText(strings[state.lang].noReminders);
     state.currentReminder = null;
     updateCardDetails(null);
+    setCopyShareEnabled(false);
     return;
   }
 
@@ -343,6 +327,7 @@ function pickRandomReminder() {
   state.currentReminder = items[nextIndex];
   setReminderText(state.currentReminder.text);
   updateCardDetails(state.currentReminder);
+  setCopyShareEnabled(true);
 }
 
 function showSetup() {
@@ -385,9 +370,9 @@ async function loadData(lang, { force = false } = {}) {
   }
 
   if (state.data[lang] && !force) {
+    setControlsEnabled(true);
     updateCategoryOptions();
     pickRandomReminder();
-    setControlsEnabled(true);
     updateDiagnostics();
     return;
   }
@@ -397,9 +382,9 @@ async function loadData(lang, { force = false } = {}) {
     const result = await fetchReminders(url, { cacheBust: config.cacheBust });
     state.data[lang] = result;
     hideError();
+    setControlsEnabled(true);
     updateCategoryOptions();
     pickRandomReminder();
-    setControlsEnabled(true);
     updateDiagnostics();
   } catch (err) {
     showError(err.message || "Fetch failed");
