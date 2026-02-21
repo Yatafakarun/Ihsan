@@ -187,12 +187,12 @@ body {
 
 .card-desc {
   margin: 0;
-  color: var(--color-muted);
+  color: var(--color-text);
   line-height: 1.6;
   text-align: start;
   direction: inherit;
-  font-size: var(--text-md);
-  opacity: 0.8;
+  font-size: var(--text-sm);
+  opacity: 0.88;
 }
 
 .ref-list {
@@ -213,7 +213,7 @@ body {
   border-radius: 0;
   font-size: var(--text-sm);
   color: var(--color-text);
-  opacity: 0.78;
+  opacity: 0.92;
   text-align: start;
   direction: inherit;
   unicode-bidi: plaintext;
@@ -228,7 +228,7 @@ body {
 
 .actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
@@ -336,6 +336,15 @@ footer {
 
 html[dir="rtl"] .topbar {
   flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .brand {
+  order: 2;
+  text-align: right;
+}
+
+html[dir="rtl"] .lang-toggle {
+  order: 1;
 }
 
 html[dir="rtl"] body {

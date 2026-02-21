@@ -2,7 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
-## 2026-02-21
+
+## Version 1.0.1 2026-21-02
+
+### Changed
+- Visual design upgraded for a WhatsApp-status style card (depth, gradients, spacing, typography).
+- RTL behavior refined: main text centered, details aligned to start (RTL right).
+- Default language set to Arabic and category defaults to All on load.
+- Copy formatting improved (main text + sources + description + attribution, separated by lines).
+- Arabic brand label set to "إحسان" with RTL placement.
+- Description sizing and readability adjusted; main text styling isolated to avoid overrides.
+- SEO updated with bilingual description/keywords; Open Graph tags removed to reduce previews.
+
+### Added
+- 7-column data model support: Text, Cats, Description, Ayah, Hadith, Quote, Other.
+- Ayah/Hadith prefixes in Arabic and English.
+- Custom fonts: Jannah for Arabic UI/main text; Uthmani Hafs for Ayah references.
+
+### Removed
+- Share button and related share logic (Copy is the only action).
+
+## Version 1.0.0 2026-20-02
 
 ### Added
 - Static web app structure with `index.html`, CSS, and JS modules (no build tools).

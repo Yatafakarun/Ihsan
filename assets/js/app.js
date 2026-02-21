@@ -1,6 +1,6 @@
 const config = {
   appName: "Ihsan",
-  defaultLanguage: "en",
+  defaultLanguage: "ar",
   sheetCsvUrlEnglish: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxdf1x58TakjcCeZXZYMhtaU68o7fIpp_4QEI05ZFEwS6JR-QZZK9bOF9OVqlJNDIJPHWZlRi8gf6a/pub?gid=504165636&single=true&output=csv",
   sheetCsvUrlArabic: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTexhqHoB3A_qpvLPjV8sbnIty2yDv_hErrO4zVWo-tlSl7-tMWxq3NJgEVrDpiKBhRVLq56QUEfSeK/pub?gid=53116089&single=true&output=csv",
   cacheBust: true,
@@ -13,12 +13,8 @@ import {
   storageSet,
   randomIndex,
   copyText,
-  isClipboardSupported,
-  isShareSupported,
-  getWhatsAppShareUrl,
-  getWaMeUrl,
   getQueryParam,
-  isLikelyMobile,
+  isClipboardSupported,
 } from "./utils.js";
 
 const ALL_VALUE = "__all__";
@@ -26,6 +22,7 @@ const LENGTH_THRESHOLDS = { short: 80, ok: 140 };
 
 const strings = {
   en: {
+    brand: "Ihsan",
     setupTitle: "Setup needed",
     setupBody: "Set the published CSV URLs in assets/js/app.js for English and Arabic.",
     errorTitle: "Could not load reminders",
@@ -35,22 +32,19 @@ const strings = {
     allCats: "All",
     newBtn: "New",
     copyBtn: "Copy",
-    shareBtn: "Share",
     footer:
-      "Pick a reminder, tap Copy or Share, then paste into WhatsApp status.",
+      "Pick a reminder, tap Copy, then paste into WhatsApp status.",
     loading: "Loading...",
     noReminders: "No reminders found for this category.",
     copySuccess: "Copied to clipboard.",
     copyFail: "Copy failed. Try again.",
-    shareSuccess: "Share opened.",
-    shareFail: "Share canceled. Use Copy instead.",
-    shareFallback: "Share link opened.",
     charsLabel: "chars",
     hintShort: "Short",
     hintOk: "OK",
     hintLong: "Long",
   },
   ar: {
+    brand: "إحسان",
     setupTitle: "الإعداد مطلوب",
     setupBody: "ضع روابط CSV المنشورة في assets/js/app.js للإنجليزية والعربية.",
     errorTitle: "تعذر تحميل التذكيرات",
@@ -60,15 +54,11 @@ const strings = {
     allCats: "الكل",
     newBtn: "جديد",
     copyBtn: "نسخ",
-    shareBtn: "مشاركة",
-    footer: "اختر تذكرة، ثم اضغط نسخ أو مشاركة، والصقها في حالة واتساب.",
+    footer: "اختر تذكرة، ثم اضغط نسخ، والصقها في حالة واتساب.",
     loading: "جار التحميل...",
     noReminders: "لا توجد تذكيرات لهذه الفئة.",
     copySuccess: "تم النسخ.",
     copyFail: "فشل النسخ. حاول مرة أخرى.",
-    shareSuccess: "تم فتح المشاركة.",
-    shareFail: "تم إلغاء المشاركة. استخدم النسخ.",
-    shareFallback: "تم فتح رابط المشاركة.",
     charsLabel: "حرف",
     hintShort: "قصير",
     hintOk: "مناسب",
@@ -89,7 +79,6 @@ const els = {
   descText: document.getElementById("descText"),
   newBtn: document.getElementById("newBtn"),
   copyBtn: document.getElementById("copyBtn"),
-  shareBtn: document.getElementById("shareBtn"),
   charCount: document.getElementById("charCount"),
   lengthHint: document.getElementById("lengthHint"),
   footer: document.getElementById("footerText"),
@@ -142,17 +131,62 @@ function setControlsEnabled(enabled) {
   els.categorySelect.disabled = !enabled;
   els.newBtn.disabled = !enabled;
   els.copyBtn.disabled = !enabled;
-  els.shareBtn.disabled = !enabled;
 }
 
 function setCopyShareEnabled(enabled) {
   els.copyBtn.disabled = !enabled;
-  els.shareBtn.disabled = !enabled;
 }
 
 function setReminderText(text) {
   els.reminderText.textContent = text;
   updateMeta(text);
+}
+
+function getSourcePrefixes(lang) {
+  if (lang === "ar") {
+    return {
+      ayah: "قال تعالئ",
+      hadith: "قال رسول الله صلى الله عليه وسلم",
+    };
+  }
+
+  return {
+    ayah: "Allah, the Most High, says:",
+    hadith: "The Messenger of Allah (peace be upon him) said",
+  };
+}
+
+function applySourcePrefix(value, prefix) {
+  const trimmed = String(value || "").trim();
+  if (!trimmed || !prefix) return trimmed;
+  if (trimmed.startsWith(prefix)) return trimmed;
+  const prefixWithColon = `${prefix}:`;
+  if (trimmed.startsWith(prefixWithColon)) return trimmed;
+  return `${prefix} ${trimmed}`;
+}
+
+function collectSourceLines(item, lang) {
+  const sources = item?.sources || {};
+  const sourceKeys = ["ayah", "hadith", "quote", "other"];
+  const prefixes = getSourcePrefixes(lang);
+  const lines = [];
+
+  sourceKeys.forEach((key) => {
+    const values = Array.isArray(sources[key]) ? sources[key] : [];
+    values.forEach((value) => {
+      let finalValue = value;
+      if (key === "ayah") {
+        finalValue = applySourcePrefix(value, prefixes.ayah);
+      } else if (key === "hadith") {
+        finalValue = applySourcePrefix(value, prefixes.hadith);
+      }
+      if (finalValue) {
+        lines.push(finalValue);
+      }
+    });
+  });
+
+  return lines;
 }
 
 function updateCardDetails(item) {
@@ -164,12 +198,9 @@ function updateCardDetails(item) {
     return;
   }
 
-  const sources = item.sources || {};
   const desc = item.desc || "";
-  const sourceKeys = ["ayah", "hadith", "quote", "other"];
-  const hasSources = sourceKeys.some((key) =>
-    Array.isArray(sources[key]) && sources[key].length > 0
-  );
+  const sourceLines = collectSourceLines(item, state.lang);
+  const hasSources = sourceLines.length > 0;
   const hasDesc = Boolean(desc);
 
   els.cardDetails.hidden = !(hasSources || hasDesc);
@@ -185,42 +216,13 @@ function updateCardDetails(item) {
   if (els.sourceList) {
     els.sourceList.innerHTML = "";
     if (hasSources) {
-      const isArabic = state.lang === "ar";
-      const isEnglish = state.lang === "en";
-      const prefixAyah = isArabic
-        ? "قال تعالئ"
-        : "Allah, the Most High, says:";
-      const prefixHadith = isArabic
-        ? "قال رسول الله صلى الله عليه وسلم"
-        : "The Messenger of Allah (peace be upon him) said";
-      const applyPrefix = (value, prefix) => {
-        const trimmed = String(value || "").trim();
-        if (!trimmed) return "";
-        if (!prefix) return trimmed;
-        if (trimmed.startsWith(prefix)) return trimmed;
-        const prefixWithColon = `${prefix}:`;
-        if (trimmed.startsWith(prefixWithColon)) return trimmed;
-        return `${prefix} ${trimmed}`;
-      };
-
-      sourceKeys.forEach((key) => {
-        const values = Array.isArray(sources[key]) ? sources[key] : [];
-        if (!values.length) return;
-        values.forEach((value) => {
-          let finalValue = value;
-          if (key === "ayah") {
-            finalValue = applyPrefix(value, prefixAyah);
-          } else if (key === "hadith") {
-            finalValue = applyPrefix(value, prefixHadith);
-          }
-          if (!finalValue) return;
-          const li = document.createElement("li");
-          if (key === "ayah") {
-            li.classList.add("ref-ayah");
-          }
-          li.textContent = finalValue;
-          els.sourceList.appendChild(li);
-        });
+      sourceLines.forEach((value) => {
+        const li = document.createElement("li");
+        if (value.startsWith(getSourcePrefixes(state.lang).ayah)) {
+          li.classList.add("ref-ayah");
+        }
+        li.textContent = value;
+        els.sourceList.appendChild(li);
       });
     }
   }
@@ -249,11 +251,10 @@ function updateMeta(text) {
 
 function updateLanguageUI() {
   const langStrings = strings[state.lang];
-  els.appName.textContent = config.appName;
+  els.appName.textContent = langStrings.brand || config.appName;
   els.categoryLabel.textContent = langStrings.categoryLabel;
   els.newBtn.textContent = langStrings.newBtn;
   els.copyBtn.textContent = langStrings.copyBtn;
-  els.shareBtn.textContent = langStrings.shareBtn;
   els.footer.textContent = langStrings.footer;
   els.setupTitle.textContent = langStrings.setupTitle;
   els.setupBody.textContent = langStrings.setupBody;
@@ -412,29 +413,36 @@ function handleCategoryChange(value) {
 
 async function handleCopy() {
   if (!state.currentReminder) return;
-  const success = await copyText(state.currentReminder.text);
-  showToast(success ? strings[state.lang].copySuccess : strings[state.lang].copyFail);
-  updateDiagnostics();
-}
+  const reminder = state.currentReminder;
+  const sourceLines = collectSourceLines(reminder, state.lang);
+  const desc = (reminder.desc || "").trim();
+  const lines = [];
+  const bullet = "•";
+  const attribution = "ihsan.yatafakarun.org";
 
-async function handleShare() {
-  if (!state.currentReminder) return;
-  const text = state.currentReminder.text;
-
-  if (isShareSupported()) {
-    try {
-      await navigator.share({ text, title: config.appName });
-      showToast(strings[state.lang].shareSuccess);
-      return;
-    } catch (err) {
-      showToast(strings[state.lang].shareFail, "warn");
-      return;
-    }
+  if (reminder.text) {
+    lines.push(reminder.text.trim());
   }
 
-  const url = isLikelyMobile() ? getWhatsAppShareUrl(text) : getWaMeUrl(text);
-  window.open(url, "_blank", "noopener,noreferrer");
-  showToast(strings[state.lang].shareFallback);
+  if (sourceLines.length) {
+    lines.push("");
+    sourceLines.forEach((line) => {
+      lines.push(`${bullet} ${line}`);
+    });
+  }
+
+  if (desc) {
+    lines.push("");
+    lines.push(desc);
+  }
+
+  lines.push("");
+  lines.push(attribution);
+
+  const finalText = lines.join("\n");
+  const success = await copyText(finalText);
+  showToast(success ? strings[state.lang].copySuccess : strings[state.lang].copyFail);
+  updateDiagnostics();
 }
 
 function bindEvents() {
@@ -456,7 +464,6 @@ function bindEvents() {
   });
 
   els.copyBtn.addEventListener("click", handleCopy);
-  els.shareBtn.addEventListener("click", handleShare);
   els.retryBtn.addEventListener("click", () => {
     loadData(state.lang, { force: true });
   });
@@ -497,7 +504,6 @@ function updateDiagnostics() {
 
   const data = state.data[state.lang];
   const items = [
-    { label: "Web Share supported", value: isShareSupported() ? "Yes" : "No" },
     {
       label: "Clipboard supported",
       value: isClipboardSupported() ? "Yes" : "No",
@@ -570,13 +576,6 @@ async function runSelfTest() {
     detail: toggled ? "OK" : "Failed",
   });
 
-  const encoded = getWaMeUrl("Test & check");
-  results.push({
-    label: "Share URL encoding test",
-    pass: encoded.includes("%26"),
-    detail: encoded,
-  });
-
   results.push({
     label: "Clipboard availability test",
     pass: isClipboardSupported(),
@@ -589,8 +588,10 @@ async function runSelfTest() {
 function init() {
   const storedLang = storageGet("ihsan_lang", config.defaultLanguage);
   state.lang = storedLang === "ar" ? "ar" : "en";
-  state.selectedCategory.en = storageGet("ihsan_cat_en", ALL_VALUE);
-  state.selectedCategory.ar = storageGet("ihsan_cat_ar", ALL_VALUE);
+  state.selectedCategory.en = ALL_VALUE;
+  state.selectedCategory.ar = ALL_VALUE;
+  storageSet("ihsan_cat_en", ALL_VALUE);
+  storageSet("ihsan_cat_ar", ALL_VALUE);
 
   updateLanguageUI();
   applyDir();
